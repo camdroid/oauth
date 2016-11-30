@@ -37,7 +37,25 @@ def reddit_callback():
         abort(403)
     code = request.args.get('code')
     # We'll change this next line in just a moment
-    return "got a code! %s" % code
+    #return "got a code! %s" % code
+    return "Got a token! {}".format(get_token(code))
+
+import requests
+import requests.auth
+def get_token(code):
+    client_auth = requests.auth.HTTPBasicAuth(reddit_id, reddit_secret)
+    post_data = {"grant_type": "authorization_code",
+                 "code": code,
+                 "redirect_uri": redirect_uri}
+    response = requests.post("https://ssl.reddit.com/api/v1/access_token",
+                             auth=client_auth,
+                             data=post_data)
+    token_json = response.json()
+    if 'error' in token_json:
+        raise Exception(token_json['message'])
+
+    return token_json["access_token"]
+
 
 
 # Left as an exercise to the reader.
