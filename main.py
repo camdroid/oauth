@@ -38,7 +38,8 @@ def reddit_callback():
     code = request.args.get('code')
     # We'll change this next line in just a moment
     #return "got a code! %s" % code
-    return "Got a token! {}".format(get_token(code))
+    #return "Got a token! {}".format(get_token(code))
+    return 'Username: {}'.format(get_reddit_username(get_token(code)))
 
 import requests
 import requests.auth
@@ -56,7 +57,11 @@ def get_token(code):
 
     return token_json["access_token"]
 
-
+def get_reddit_username(access_token):
+    headers = {'Authorization': 'bearer ' + access_token}
+    response = requests.get('https://oauth.reddit.com/api/v1/me', headers=headers)
+    res_json = response.json()
+    return res_json['name']
 
 # Left as an exercise to the reader.
 # You may want to store valid states in a database or memcache,
