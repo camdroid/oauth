@@ -1,8 +1,12 @@
 from flask import Flask
-from secrets import reddit_id, reddit_secret, redirect_uri
+from flask import abort, request
+from secrets import reddit_id, reddit_secret, reddit_redirect_uri
+from uuid import uuid4
+import requests
+import requests.auth
+import urllib
 
 app = Flask(__name__)
-
 
 @app.route('/')
 def homepage():
@@ -12,20 +16,17 @@ def homepage():
 def make_authorization_url():
     # Generate a random string for the state parameter
     # Save it for use later to prevent xsrf attacks
-    from uuid import uuid4
     state = str(uuid4())
     save_created_state(state)
     params = {"client_id": reddit_id,
               "response_type": "code",
               "state": state,
-              "redirect_uri": redirect_uri,
+              "redirect_uri": reddit_redirect_uri,
               "duration": "temporary",
               "scope": "identity"}
-    import urllib
     url = "https://ssl.reddit.com/api/v1/authorize?" + urllib.parse.urlencode(params)
     return url
 
-from flask import abort, request
 @app.route('/reddit_callback')
 def reddit_callback():
     error = request.args.get('error', '')
@@ -37,17 +38,14 @@ def reddit_callback():
         abort(403)
     code = request.args.get('code')
     # We'll change this next line in just a moment
-    #return "got a code! %s" % code
-    #return "Got a token! {}".format(get_token(code))
+    import pdb; pdb.set_trace()
     return 'Username: {}'.format(get_reddit_username(get_token(code)))
 
-import requests
-import requests.auth
 def get_token(code):
     client_auth = requests.auth.HTTPBasicAuth(reddit_id, reddit_secret)
     post_data = {"grant_type": "authorization_code",
                  "code": code,
-                 "redirect_uri": redirect_uri}
+                 "redirect_uri": reddit_redirect_uri}
     response = requests.post("https://ssl.reddit.com/api/v1/access_token",
                              auth=client_auth,
                              data=post_data)
