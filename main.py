@@ -1,6 +1,7 @@
 from flask import Flask
 from flask import abort, request
-from secrets import reddit_id, reddit_secret, reddit_redirect_uri
+from secrets import reddit_id, reddit_secret, reddit_redirect_uri, reddit_auth_url
+from secrets import goodreads_id, goodreads_auth_url, goodreads_redirect_url
 from uuid import uuid4
 import requests
 import requests.auth
@@ -11,20 +12,24 @@ app = Flask(__name__)
 @app.route('/')
 def homepage():
     text = '<a href="%s">Authenticate with reddit</a>'
-    return text % make_authorization_url()
+    return text % make_authorization_url(
+         reddit_id, reddit_auth_url,
+         reddit_redirect_uri
+        #goodreads_id, goodreads_auth_url, goodreads_redirect_url
+    )
 
-def make_authorization_url():
+def make_authorization_url(_id=None, authorization_url=None, redirect_url=None):
     # Generate a random string for the state parameter
     # Save it for use later to prevent xsrf attacks
     state = str(uuid4())
     save_created_state(state)
-    params = {"client_id": reddit_id,
+    params = {"client_id": _id,
               "response_type": "code",
               "state": state,
-              "redirect_uri": reddit_redirect_uri,
+              "redirect_uri": redirect_url,
               "duration": "temporary",
               "scope": "identity"}
-    url = "https://ssl.reddit.com/api/v1/authorize?" + urllib.parse.urlencode(params)
+    url = authorization_url + urllib.parse.urlencode(params)
     return url
 
 @app.route('/reddit_callback')
